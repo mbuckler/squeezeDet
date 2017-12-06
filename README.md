@@ -83,7 +83,7 @@ The following instructions are written for Linux-based distros.
   ```
   `trainval.txt` contains indices to all the images in the training data. In our experiments, we randomly split half of indices in `trainval.txt` into `train.txt` to form a training set and rest of them into `val.txt` to form a validation set. For your convenience, we provide a script to split the train-val set automatically. Simply run
   
-    ```Shell
+  ```Shell
   cd $SQDT_ROOT/data/
   python random_split_train_val.py
   ```
@@ -154,3 +154,20 @@ The following instructions are written for Linux-based distros.
   ![alt text](https://github.com/BichenWuUCB/squeezeDet/blob/master/README/detection_analysis.png)
   ![alt text](https://github.com/BichenWuUCB/squeezeDet/blob/master/README/graph.png)
   ![alt text](https://github.com/BichenWuUCB/squeezeDet/blob/master/README/det_img.png)
+
+- If you would like to simply run an evaluation on a given model, use the python
+  evaluation script directly
+
+  ```Shell
+  python ./src/eval.py \
+    --dataset=KITTI \
+    --data_path=./data/KITTI \
+    --image_set=val \
+    --eval_dir=eval_logs_plus \
+    --run_once=True \
+    --checkpoint_path=data/model_checkpoints/squeezeDetPlus/model.ckpt-95000 \
+    --net=squeezeDet+ \
+    --gpu=0 \
+    &> test_log_plus.txt
+  ```
+
