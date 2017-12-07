@@ -77,8 +77,11 @@ def quantize():
             if (('kernels' in var.name) and (not ('Momentum' in var.name))):
                 print(var.name)
                 print(sess.run(var))
-
-        exit()
+                add_1_op = tf.assign(var,var + 1)
+                sess.run(add_1_op)
+                print(sess.run(var))
+            
+                exit()
         
     return
        
