@@ -29,28 +29,7 @@ tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture.""")
 
 from tensorflow.python import pywrap_tensorflow
-'''
-def eval_once(
-    saver, ckpt_path, model):
 
-  with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-
-    # Restores from checkpoint
-    saver = 
-    saver.restore(sess, ckpt_path)
-
-    checkpoint_path = ckpt_path
-    reader = pywrap_tensorflow.NewCheckpointReader(checkpoint_path)
-    var_to_shape_map = reader.get_variable_to_shape_map()
-    for key in var_to_shape_map:
-        print("tensor_name: ", key)
-        print(reader.get_tensor(key)) 
-        test_0 = reader.get_tensor(key)
-        assign_op = test_0.assign(test_0 * 0)
-        sess.run(assign_op)
-        print(reader.get_tensor(key))
-        exit()
-'''
 def quantize():
 
   os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -81,16 +60,26 @@ def quantize():
       mc.LOAD_PRETRAINED_MODEL = False
       model = SqueezeDetPlus(mc)
 
-    #####saver = tf.train.Saver(model.model_params)
-
+    # Start a session
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        # Load in the metagraph
         ckpt_path = FLAGS.checkpoint_path
-        saver = tf.train.import_meta_graph(ckpt_path+'.meta')
+        saver = tf.train.import_meta_graph(ckpt_path+'.meta',clear_devices=True)
         saver.restore(sess, ckpt_path)
+        
+        # Initialize the variables
+        sess.run(tf.global_variables_initializer())
+
+        # Extract the variables into a list
+        all_vars = tf.all_variables()
+
+        for var in all_vars:
+            if (('kernels' in var.name) and (not ('Momentum' in var.name))):
+                print(var.name)
+                print(sess.run(var))
+
         exit()
         
-    #ckpts = set() 
-    #eval_once(FLAGS.checkpoint_path,model)
     return
        
 
