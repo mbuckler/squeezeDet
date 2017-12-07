@@ -1,6 +1,6 @@
-# Author: Bichen Wu (bichen@berkeley.edu) 08/25/2016
+# Author: Mark Buckler
 
-"""Evaluation"""
+"""Quantization"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -28,23 +28,30 @@ tf.app.flags.DEFINE_string('checkpoint_path', '/tmp/bichen/logs/squeezeDet/train
 tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture.""")
 
-
+from tensorflow.python import pywrap_tensorflow
+'''
 def eval_once(
     saver, ckpt_path, model):
 
   with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
     # Restores from checkpoint
+    saver = 
     saver.restore(sess, ckpt_path)
-    print(ckpt_path)
-    exit()
 
-    # Assuming model_checkpoint_path looks something like:
-    #   /ckpt_dir/model.ckpt-0,
-    # extract global_step from it.
-    global_step = ckpt_path.split('/')[-1].split('-')[-1]
-
-def evaluate():
+    checkpoint_path = ckpt_path
+    reader = pywrap_tensorflow.NewCheckpointReader(checkpoint_path)
+    var_to_shape_map = reader.get_variable_to_shape_map()
+    for key in var_to_shape_map:
+        print("tensor_name: ", key)
+        print(reader.get_tensor(key)) 
+        test_0 = reader.get_tensor(key)
+        assign_op = test_0.assign(test_0 * 0)
+        sess.run(assign_op)
+        print(reader.get_tensor(key))
+        exit()
+'''
+def quantize():
 
   os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -74,16 +81,21 @@ def evaluate():
       mc.LOAD_PRETRAINED_MODEL = False
       model = SqueezeDetPlus(mc)
 
-    saver = tf.train.Saver(model.model_params)
+    #####saver = tf.train.Saver(model.model_params)
 
-    
-    ckpts = set() 
-    eval_once(saver, FLAGS.checkpoint_path,model)
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        ckpt_path = FLAGS.checkpoint_path
+        saver = tf.train.import_meta_graph(ckpt_path+'.meta')
+        saver.restore(sess, ckpt_path)
+        exit()
+        
+    #ckpts = set() 
+    #eval_once(FLAGS.checkpoint_path,model)
     return
        
 
 def main(argv=None):  # pylint: disable=unused-argument
-  evaluate()
+  quantize()
 
 
 if __name__ == '__main__':
