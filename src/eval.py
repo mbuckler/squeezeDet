@@ -29,7 +29,17 @@ import random
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_integer('num_bits', 0, """Number of bits to simulate""")
+# Quantization settings
+tf.app.flags.DEFINE_boolean('use_quantization', False, 
+                            """Use quantization simulation""")
+tf.app.flags.DEFINE_integer('model_bits', 0, """Number of model bits""")
+tf.app.flags.DEFINE_integer('activation_bits', 0,
+                            """Number of activation bits""")
+tf.app.flags.DEFINE_string('rounding_method', 'none',
+                            """nearest_neighbor or stochastic""")
+tf.app.flags.DEFINE_boolean('reserve_zero_val', False,
+                            """Should a value be reserved for true zero"""
+# General settings
 tf.app.flags.DEFINE_string('dataset', 'KITTI',
                            """Currently support PASCAL_VOC or KITTI dataset.""")
 tf.app.flags.DEFINE_string('data_path', '', """Root directory of data""")
