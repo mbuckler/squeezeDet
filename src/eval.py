@@ -63,45 +63,20 @@ def eval_once(
 
     # If we are applying simulated quantization
     if FLAGS.num_bits != 0:
-        # Initialize the variables
-        #sess.run(tf.global_variables_initializer())
-
         # Extract parameter references for editing
         all_vars = ops.get_collection_ref(ops.GraphKeys.TRAINABLE_VARIABLES)
 
         for i in range(len(all_vars)):
             if (('kernels' in all_vars[i].name) and \
                     (not ('Momentum' in all_vars[i].name))):
-                '''
-                print('hi 1 ------------')
-                print(all_vars[i].name)
-                print(sess.run(all_vars[i]))
-                '''
                 if True:
                     test_op = tf.assign(all_vars[i], \
                             tf.scalar_mul(0.90,
                             (all_vars[i])))
                     sess.run(test_op)
                     sess.run(all_vars[i])
-                '''
-                print('hi 2 ------------')
-                print(sess.run(all_vars[i]))
-                break
-                '''
-        '''
-        all_vars_new = ops.get_collection_ref(ops.GraphKeys.TRAINABLE_VARIABLES)
 
-        for i in range(len(all_vars_new)):
-            if (('kernels' in all_vars_new[i].name) and \
-                    (not ('Momentum' in all_vars[i].name))):
-                
-                print('hi 3 ------------')
-                print(all_vars_new[i].name)
-                print(sess.run(all_vars_new[i]))
-                break
-                
-        exit()
-        '''
+
 
     # Assuming model_checkpoint_path looks something like:
     #   /ckpt_dir/model.ckpt-0,
