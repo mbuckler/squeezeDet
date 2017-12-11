@@ -33,12 +33,12 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_boolean('use_quantization', False, 
                             """Use quantization simulation""")
 tf.app.flags.DEFINE_integer('model_bits', 0, """Number of model bits""")
-tf.app.flags.DEFINE_integer('activation_bits', 0,
-                            """Number of activation bits""")
+#tf.app.flags.DEFINE_integer('activation_bits', 0,
+#                            """Number of activation bits""")
 tf.app.flags.DEFINE_string('rounding_method', 'none',
                             """nearest_neighbor or stochastic""")
 tf.app.flags.DEFINE_boolean('reserve_zero_val', False,
-                            """Should a value be reserved for true zero"""
+                            """Should a value be reserved for true zero""")
 # General settings
 tf.app.flags.DEFINE_string('dataset', 'KITTI',
                            """Currently support PASCAL_VOC or KITTI dataset.""")
@@ -72,7 +72,29 @@ def eval_once(
     saver.restore(sess, ckpt_path)
 
     # If we are applying simulated quantization
-    if FLAGS.num_bits != 0:
+    if FLAGS.use_quantization:
+
+        # Assertions for validity of quantization arguments
+        assert FLAGS.model_bits != 0, \
+                "Must specify non-zero number of model bits"
+        #assert FLAGS.activation_bits != 0, \
+        #        "Must specify non-zero number of activation bits"
+        assert FLAGS.rounding_method != 'none', \
+                "Must specify rounding method (nearest_neighbor or stochastic)"
+        if (FLAGS.reserve_zero_val):
+            if ((FLAGS.model_bits % 2) != 1):
+                print("Must use odd number of model bits if reserving zero value")
+                exit()
+            #if ((FLAGS.activation_bits % 2) != 1):
+            #    "Must use odd number of activation bits if reserving zero value"
+            #    exit()
+
+        print('start legit code!')
+        exit()
+
+         
+
+
         # Extract parameter references for editing
         all_vars = ops.get_collection_ref(ops.GraphKeys.TRAINABLE_VARIABLES)
 
