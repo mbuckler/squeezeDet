@@ -32,13 +32,19 @@ FLAGS = tf.app.flags.FLAGS
 # Quantization settings
 tf.app.flags.DEFINE_boolean('use_quantization', False, 
                             """Use quantization simulation""")
-tf.app.flags.DEFINE_integer('model_bits', 0, """Number of model bits""")
+tf.app.flags.DEFINE_integer('model_bits', 0, 
+                            """Number of model bits""")
 #tf.app.flags.DEFINE_integer('activation_bits', 0,
 #                            """Number of activation bits""")
 tf.app.flags.DEFINE_string('rounding_method', 'none',
                             """nearest_neighbor or stochastic""")
 tf.app.flags.DEFINE_boolean('reserve_zero_val', False,
                             """Should a value be reserved for true zero""")
+tf.app.flags.DEFINE_boolean('separate_layer_scales', False,
+                            """Set fixed point scales per layer""")
+tf.app.flags.DEFINE_boolean('separate_weight_bias_scales', False,
+                            """Separate scales per weight and biases""")
+
 # General settings
 tf.app.flags.DEFINE_string('dataset', 'KITTI',
                            """Currently support PASCAL_VOC or KITTI dataset.""")
@@ -61,6 +67,37 @@ tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture.""")
 tf.app.flags.DEFINE_string('gpu', '0', """gpu id.""")
 
+def get_quant_val_array_from_minmax(min_, max_, num_bits, reserve_zero_val):
+    
+    # Number of representational values
+    num_vals = 2^num_bits
+    # Amount to step between each representational value
+    val_step = float(max_ - min_) / float(num_vals - 1)
+    
+    # Build the quantized value array
+    quant_val_arr = np.empty([num_vals])
+    for idx in range(0,num_vals):
+        quant_val_arr[idx] = min_ + (float(idx)*val_step)
+
+    # If we are reserving a specific value for 0
+    if reserve_zero_val:
+        closest_idx_to_0 = (np.abs(quant_val_arr-0.0)).argmin()
+        quant_val_arr[closest_idx_to_0] = 0.0
+
+    return quant_val_arr
+
+def round_to_quant_val(quant_val_arr, in_val, rounding_method):
+
+    1st_closest_idx = (np.abs(quant_val_arr-in_val)).argmin()
+
+    if rounding_method == 'nearest_neighbor':
+        return quant_val_arr[1st_closest_idx]
+    if rounding_method == 'stochastic':
+        print('stoch not yet supported')
+        exit()
+        return quant_val_arr[idx]
+        
+
 
 def eval_once(
     saver, ckpt_path, summary_writer, eval_summary_ops, eval_summary_phs, imdb,
@@ -75,28 +112,27 @@ def eval_once(
     if FLAGS.use_quantization:
 
         # Assertions for validity of quantization arguments
+        assert FLAGS.rounding_method != 'none', \
+                "Must specify rounding method (nearest_neighbor or stochastic)"
         assert FLAGS.model_bits != 0, \
                 "Must specify non-zero number of model bits"
         #assert FLAGS.activation_bits != 0, \
         #        "Must specify non-zero number of activation bits"
-        assert FLAGS.rounding_method != 'none', \
-                "Must specify rounding method (nearest_neighbor or stochastic)"
-        if (FLAGS.reserve_zero_val):
-            if ((FLAGS.model_bits % 2) != 1):
-                print("Must use odd number of model bits if reserving zero value")
-                exit()
-            #if ((FLAGS.activation_bits % 2) != 1):
-            #    "Must use odd number of activation bits if reserving zero value"
-            #    exit()
-
-        print('start legit code!')
-        exit()
-
-         
-
 
         # Extract parameter references for editing
         all_vars = ops.get_collection_ref(ops.GraphKeys.TRAINABLE_VARIABLES)
+
+        for i in range(len(all_vars)):
+
+        '''
+        # Get global  
+
+            # If using a reserved zero value
+            if FLAGS.reserve_zero_val:
+                print('zero val reservation not yet supported')
+                exit()
+            else:
+            
 
         for i in range(len(all_vars)):
             if (('kernels' in all_vars[i].name) and \
@@ -107,7 +143,7 @@ def eval_once(
                             (all_vars[i])))
                     sess.run(test_op)
                     sess.run(all_vars[i])
-
+        '''
 
 
     # Assuming model_checkpoint_path looks something like:
