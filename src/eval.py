@@ -67,7 +67,11 @@ tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture.""")
 tf.app.flags.DEFINE_string('gpu', '0', """gpu id.""")
 
-def get_quant_val_array_from_minmax(min_, max_, num_bits, reserve_zero_val):
+# Function to generate array of quantized values 
+def get_quant_val_array_from_minmax(min_, 
+                                    max_, 
+                                    num_bits, 
+                                    reserve_zero_val):
     
     # Number of representational values
     num_vals = 2^num_bits
@@ -79,26 +83,32 @@ def get_quant_val_array_from_minmax(min_, max_, num_bits, reserve_zero_val):
     for idx in range(0,num_vals):
         quant_val_arr[idx] = min_ + (float(idx)*val_step)
 
-    # If we are reserving a specific value for 0
+    # If we must reserve a specific value for 0 then set the closest value to 0
     if reserve_zero_val:
         closest_idx_to_0 = (np.abs(quant_val_arr-0.0)).argmin()
         quant_val_arr[closest_idx_to_0] = 0.0
 
     return quant_val_arr
 
-def round_to_quant_val(quant_val_arr, in_val, rounding_method):
+# Function to round to quantized value
+def round_to_quant_val(quant_val_arr, 
+                       in_val, 
+                       rounding_method):
 
-    1st_closest_idx = (np.abs(quant_val_arr-in_val)).argmin()
+    closest_idx = (np.abs(quant_val_arr-in_val)).argmin()
 
     if rounding_method == 'nearest_neighbor':
-        return quant_val_arr[1st_closest_idx]
-    if rounding_method == 'stochastic':
+        return quant_val_arr[closest_idx]
+
+    elif rounding_method == 'stochastic':
         print('stoch not yet supported')
         exit()
         return quant_val_arr[idx]
+
+    else:
+        print('Must specify nearest_neighbor or stochastic rounding')
+        exit()
         
-
-
 def eval_once(
     saver, ckpt_path, summary_writer, eval_summary_ops, eval_summary_phs, imdb,
     model):
@@ -119,10 +129,165 @@ def eval_once(
         #assert FLAGS.activation_bits != 0, \
         #        "Must specify non-zero number of activation bits"
 
-        # Extract parameter references for editing
+        # Extract parameter references for quantization
         all_vars = ops.get_collection_ref(ops.GraphKeys.TRAINABLE_VARIABLES)
 
+        # Get global minimums and maximums for weights (kernels) and biases
+        global_min = float('inf')
+        global_max = 0.0
+        global_weight_min = float('inf')
+        global_weight_max = 0.0
+        global_bias_min = float('inf')
+        global_bias_max = 0.0
+
+        global_1x1_min = float('inf')
+        global_1x1_max = 0.0
+        global_3x3_min = float('inf')
+        global_3x3_max = 0.0
+        global_conv_min = float('inf')
+        global_conv_max = 0.0
+
+        global_1x1_weight_min = float('inf')
+        global_1x1_weight_max = 0.0
+        global_3x3_weight_min = float('inf')
+        global_3x3_weight_max = 0.0
+        global_conv_weight_min = float('inf')
+        global_conv_weight_max = 0.0
+
+        global_1x1_bias_min = float('inf')
+        global_1x1_bias_max = 0.0
+        global_3x3_bias_min = float('inf')
+        global_3x3_bias_max = 0.0
+        global_conv_bias_min = float('inf')
+        global_conv_bias_max = 0.0
+
+
         for i in range(len(all_vars)):
+            print(all_vars[i].name)
+            tensor     = sess.run(all_vars[i])
+            tensor_min = np.amin(tensor)
+            tensor_max = np.amax(tensor)
+            # Update global range
+            if tensor_min < global_min:
+                global_min = tensor_min
+                #print('new_min: '+str(global_min))
+            if tensor_max > global_max:
+                global_max = tensor_max
+            # Update kernel and bias ranges
+            if ('kernels' in all_vars[i].name):
+                if tensor_min < global_weight_min:
+                    global_weight_min = tensor_min
+                    #print('new_kernel_min: '+str(global_weight_min))
+                if tensor_max > global_weight_max:
+                    global_weight_max = tensor_max
+                # Update 1x1 and 3x3 ranges
+                if ('1x1' in all_vars[i].name):
+                    if tensor_min < global_1x1_weight_min:
+                        global_1x1_weight_min = tensor_min
+                        #print('new_1x1_kernel_min: '+str(global_1x1_weight_min))
+                    if tensor_max > global_1x1_weight_max:
+                        global_1x1_weight_max = tensor_max
+                if ('3x3' in all_vars[i].name):
+                    if tensor_min < global_3x3_weight_min:
+                        global_3x3_weight_min = tensor_min
+                        #print('new_3x3_kernel_min: '+str(global_3x3_weight_min))
+                    if tensor_max > global_3x3_weight_max:
+                        global_3x3_weight_max = tensor_max
+                if ('conv' in all_vars[i].name):
+                    if tensor_min < global_conv_weight_min:
+                        global_conv_weight_min = tensor_min
+                        #print('new_conv_kernel_min: '+str(global_conv_weight_min))
+                    if tensor_max > global_conv_weight_max:
+                        global_conv_weight_max = tensor_max
+
+            if ('biases' in all_vars[i].name):
+                if tensor_min < global_bias_min:
+                    global_bias_min = tensor_min
+                    #print('new_bias_min: '+str(global_bias_min))
+                if tensor_max > global_bias_max:
+                    global_bias_max = tensor_max
+                # Update 1x1 and 3x3 ranges
+                if ('1x1' in all_vars[i].name):
+                    if tensor_min < global_1x1_bias_min:
+                        global_1x1_bias_min = tensor_min
+                        #print('new_1x1_bias_min: '+str(global_1x1_bias_min))
+                    if tensor_max > global_1x1_bias_max:
+                        global_1x1_bias_max = tensor_max
+                if ('3x3' in all_vars[i].name):
+                    if tensor_min < global_3x3_bias_min:
+                        global_3x3_bias_min = tensor_min
+                        #print('new_3x3_bias_min: '+str(global_3x3_bias_min))
+                    if tensor_max > global_3x3_bias_max:
+                        global_3x3_bias_max = tensor_max
+                if ('conv' in all_vars[i].name):
+                    if tensor_min < global_conv_bias_min:
+                        global_conv_bias_min = tensor_min
+                        #print('new_conv_bias_min: '+str(global_conv_bias_min))
+                    if tensor_max > global_conv_bias_max:
+                        global_conv_bias_max = tensor_max
+
+            # Update 1x1, 3x3, and conv ranges
+            if ('1x1' in all_vars[i].name):
+                if tensor_min < global_1x1_min:
+                    global_1x1_min = tensor_min
+                if tensor_max > global_1x1_max:
+                    global_1x1_max = tensor_max
+            if ('3x3' in all_vars[i].name):
+                if tensor_min < global_3x3_min:
+                    global_3x3_min = tensor_min
+                if tensor_max > global_3x3_max:
+                    global_3x3_max = tensor_max
+            if ('conv' in all_vars[i].name):
+                if tensor_min < global_conv_min:
+                    global_conv_min = tensor_min
+                if tensor_max > global_conv_max:
+                    global_conv_max = tensor_max
+
+
+        print('---')
+        print('global spread:')
+        print(global_max, global_min)
+        print('global weight spread:')
+        print(global_weight_max, global_weight_min )
+        print('global bias spread:')
+        print(global_bias_max,global_bias_min )
+        print('---')
+        print('global 1x1 spread:')
+        print(global_1x1_max, global_1x1_min )
+        print('global 1x1 weight spread:')
+        print(global_1x1_weight_max, global_1x1_weight_min )
+        print('global 1x1 bias spread:')
+        print(global_1x1_bias_max, global_1x1_bias_min )
+        print('---')
+        print('global 3x3 spread:')
+        print(global_3x3_max, global_3x3_min )
+        print('global 3x3 weight spread:')
+        print(global_3x3_weight_max, global_3x3_weight_min )
+        print('global 3x3 bias spread:')
+        print(global_3x3_bias_max, global_3x3_bias_min )
+        print('---')
+        print('global conv spread:')
+        print(global_conv_max, global_conv_min )
+        print('global conv weight spread:')
+        print(global_conv_weight_max, global_conv_weight_min )
+        print('global conv bias spread:')
+        print(global_conv_bias_max, global_conv_bias_min )
+
+
+
+
+        exit()
+
+
+        '''
+        get_quant_val_array_from_minmax(min_, 
+                                            max_, 
+                                            num_bits, 
+                                            reserve_zero_val):
+        round_to_quant_val(quant_val_arr, 
+                               in_val, 
+                               rounding_method):
+        '''
 
         '''
         # Get global  
