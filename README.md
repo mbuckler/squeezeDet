@@ -33,7 +33,7 @@ The following instructions are written for Linux-based distros.
   2. Launch the virtual environment.
   
     ```Shell
-    source env/bin/activate
+    source ~/env/bin/activate
     ```
     
 - Use pip to install required Python packages:
