@@ -103,17 +103,21 @@ def round_to_quant_val(quant_val_arr,
         if ((closest_idx == 0) or \
                 (closest_idx == (len(quant_val_arr)-1))):
             return quant_val_arr[closest_idx]
-        # If the nearest neighbor is equal to or below the real value
+        # If the nearest neighbor is below the real value
         elif (in_val > quant_val_arr[closest_idx]):
+            # Using > below is counter intuitive. We want the bias to be towards
+            # the closest value.
             if (random.uniform(quant_val_arr[closest_idx], \
-                    quant_val_arr[closest_idx+1]) < in_val):
+                    quant_val_arr[closest_idx+1]) > in_val):
                 return quant_val_arr[closest_idx]
             else:
                 return quant_val_arr[closest_idx+1]
         # If the nearest neighbor is above the real value
         elif (in_val < quant_val_arr[closest_idx]):
+            # Using > below is counter intuitive. We want the bias to be towards
+            # the closest value.
             if (random.uniform(quant_val_arr[closest_idx-1], \
-                    quant_val_arr[closest_idx]) < in_val):
+                    quant_val_arr[closest_idx]) > in_val):
                 return quant_val_arr[closest_idx-1]
             else:
                 return quant_val_arr[closest_idx]
