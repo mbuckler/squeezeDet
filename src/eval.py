@@ -72,9 +72,9 @@ def get_quant_val_array_from_minmax(min_,
                                     max_, 
                                     num_bits, 
                                     reserve_zero_val):
-    
+   
     # Number of representational values
-    num_vals = 2^num_bits
+    num_vals = 2**num_bits
     # Amount to step between each representational value
     val_step = float(max_ - min_) / float(num_vals - 1)
     
@@ -274,31 +274,48 @@ def eval_once(
         print(global_conv_bias_max, global_conv_bias_min )
 
 
+        # For each set of parameters
+        for i in range(len(all_vars)):
+            print(all_vars[i].name)
 
+            # Load the data into a numpy array for easy manipulation
+            tensor  = sess.run(all_vars[i])
 
-        exit()
+            # Get the set of values for quantization
+            quant_val_arr = \
+                get_quant_val_array_from_minmax(global_min,
+                                                global_max,
+                                                FLAGS.model_bits,
+                                                FLAGS.reserve_zero_val)
 
-
-        '''
-        get_quant_val_array_from_minmax(min_, 
-                                            max_, 
-                                            num_bits, 
-                                            reserve_zero_val):
-        round_to_quant_val(quant_val_arr, 
-                               in_val, 
-                               rounding_method):
-        '''
-
-        '''
-        # Get global  
-
-            # If using a reserved zero value
-            if FLAGS.reserve_zero_val:
-                print('zero val reservation not yet supported')
-                exit()
-            else:
             
+            # Loop over the whole tensor
+            if 'biases' in all_vars[i].name:
+                for idx0 in range(0,tensor.shape[0]):
+                    tensor[idx0] = round_to_quant_val( \
+                                            quant_val_arr,
+                                            tensor[idx0],
+                                            FLAGS.rounding_method)
+            if 'kernels' in all_vars[i].name:
+                for idx0 in range(0,tensor.shape[0]):
+                  for idx1 in range(0,tensor.shape[1]):
+                    for idx2 in range(0,tensor.shape[2]):
+                      for idx3 in range(0,tensor.shape[3]):
+                        #print('----')
+                        #print(tensor[idx0][idx1][idx2][idx3])
+                        tensor[idx0][idx1][idx2][idx3] = \
+                                round_to_quant_val( \
+                                            quant_val_arr,
+                                            tensor[idx0][idx1][idx2][idx3],
+                                            FLAGS.rounding_method)
+                        #print(tensor[idx0][idx1][idx2][idx3])
 
+            # Store the data back into the tensorflow variable
+            test_op = tf.assign(all_vars[i], tensor)
+            sess.run(test_op)
+
+
+        '''
         for i in range(len(all_vars)):
             if (('kernels' in all_vars[i].name) and \
                     (not ('Momentum' in all_vars[i].name))):
