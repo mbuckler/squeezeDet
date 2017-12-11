@@ -301,10 +301,25 @@ def eval_once(
             # Load the data into a numpy array for easy manipulation
             tensor  = sess.run(all_vars[i])
 
+            # If conv and fire layers are to be scaled separately
+            if FLAGS.separate_layer_scales:
+                if ('conv' in all_vars[i].name):
+                    min_quant_val = global_conv_min
+                    max_quant_val = global_conv_max
+                elif ('fire' in all_vars[i].name):
+                    min_quant_val = min(global_1x1_min,global_3x3_min)
+                    max_quant_val = max(global_1x1_max,global_3x3_max)
+                else:
+                    print("Error: Only conv, 3x3, and 1x1 currently supported")
+                    exit()
+            else:
+                min_quant_val = global_min
+                max_quant_val = global_max
+
             # Get the set of values for quantization
             quant_val_arr = \
-                get_quant_val_array_from_minmax(global_min,
-                                                global_max,
+                get_quant_val_array_from_minmax(min_quant_val,
+                                                max_quant_val,
                                                 FLAGS.model_bits,
                                                 FLAGS.reserve_zero_val)
 
