@@ -6,12 +6,16 @@
 # Author: Mark Buckler
 
 import subprocess
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 rounding_methods = ['nearest_neighbor','stochastic']
-model_bits_array = [4,5,6,7,8,9,10,11,12]
+model_bits_array = [3,5,7,9,11,13]
 
 def run_sweep(gpu,
-              rounding_method_idx, 
+              rounding_method_idx,
               reserve_zero_val,
               separate_layer_scales):
     mAPs = []
@@ -60,31 +64,63 @@ def run_sweep(gpu,
     print('Mean Average Precision:')
     print(mAPs)
 
+    return mAPs
+
 # Parameters for running the sweep
+sweep_labels = ['nearneighbor_nozero',
+                'nearneighbor_zero',
+                'stochastic_nozero',
+                'stochastic_zero']
+mAPs_to_plot = []
 gpu                   = 0
+separate_layer_scales = False
+
+# Run four sweeps to plot
 rounding_method_idx   = 0
+'''
+reserve_zero_val      = False
+mAPs_to_plot.append(run_sweep(gpu,
+                    rounding_method_idx,
+                    reserve_zero_val,
+                    separate_layer_scales))
+
+reserve_zero_val      = True
+mAPs_to_plot.append(run_sweep(gpu,
+                    rounding_method_idx,
+                    reserve_zero_val,
+                    separate_layer_scales))
+
+
+rounding_method_idx   = 1
 
 reserve_zero_val      = False
-separate_layer_scales = False
-run_sweep(gpu,
-          rounding_method_idx, 
-          reserve_zero_val,
-          separate_layer_scales)
-reserve_zero_val      = False
-separate_layer_scales = True
-run_sweep(gpu,
-          rounding_method_idx, 
-          reserve_zero_val,
-          separate_layer_scales)
+mAPs_to_plot.append(run_sweep(gpu,
+                    rounding_method_idx,
+                    reserve_zero_val,
+                    separate_layer_scales))
+
 reserve_zero_val      = True
-separate_layer_scales = False
-run_sweep(gpu,
-          rounding_method_idx, 
-          reserve_zero_val,
-          separate_layer_scales)
-reserve_zero_val      = True
-separate_layer_scales = True
-run_sweep(gpu,
-          rounding_method_idx, 
-          reserve_zero_val,
-          separate_layer_scales)
+mAPs_to_plot.append(run_sweep(gpu,
+                    rounding_method_idx,
+                    reserve_zero_val,
+                    separate_layer_scales))
+'''
+
+# Fake the data for experiment
+model_bits_array = [4, 5, 6, 7, 8, 9, 10, 11, 12]
+mAPs_to_plot.append([0.0, 0.256, 0.694, 0.803, 0.812, 0.819, 0.818, 0.822,
+    0.822])
+mAPs_to_plot.append([1.0, 1.256, 1.694, 1.803, 1.812, 1.819, 1.818, 1.822,
+    1.822])
+
+plt.plot(model_bits_array,mAPs_to_plot[0],'r',
+         model_bits_array,mAPs_to_plot[1],'b',
+         )
+
+plt.savefig('test.png')
+
+
+
+
+
+
