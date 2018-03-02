@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 rounding_methods = ['nearest_neighbor','stochastic']
-model_bits_array = [3,5,7,9,11]
+model_bits_array = [4,5,6,7,9,11]
 
 def run_sweep(gpu,
               rounding_method_idx,
