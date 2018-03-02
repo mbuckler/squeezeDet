@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 rounding_methods = ['nearest_neighbor','stochastic']
-model_bits_array = [3,5,7,9,11,13]
+model_bits_array = [3,5,7,9,11]
 
 def run_sweep(gpu,
               rounding_method_idx,
@@ -77,7 +77,6 @@ separate_layer_scales = False
 
 # Run four sweeps to plot
 rounding_method_idx   = 0
-'''
 reserve_zero_val      = False
 mAPs_to_plot.append(run_sweep(gpu,
                     rounding_method_idx,
@@ -92,7 +91,6 @@ mAPs_to_plot.append(run_sweep(gpu,
 
 
 rounding_method_idx   = 1
-
 reserve_zero_val      = False
 mAPs_to_plot.append(run_sweep(gpu,
                     rounding_method_idx,
@@ -104,21 +102,25 @@ mAPs_to_plot.append(run_sweep(gpu,
                     rounding_method_idx,
                     reserve_zero_val,
                     separate_layer_scales))
-'''
 
-# Fake the data for experiment
-model_bits_array = [4, 5, 6, 7, 8, 9, 10, 11, 12]
-mAPs_to_plot.append([0.0, 0.256, 0.694, 0.803, 0.812, 0.819, 0.818, 0.822,
-    0.822])
-mAPs_to_plot.append([1.0, 1.256, 1.694, 1.803, 1.812, 1.819, 1.818, 1.822,
-    1.822])
+# Plot mAP data
+plt.plot(model_bits_array,mAPs_to_plot[0],'r',label=sweep_labels[0])
+plt.plot(model_bits_array,mAPs_to_plot[1],'k',label=sweep_labels[1])
+plt.plot(model_bits_array,mAPs_to_plot[2],'b',label=sweep_labels[2])
+plt.plot(model_bits_array,mAPs_to_plot[3],'g',label=sweep_labels[3])
 
-plt.plot(model_bits_array,mAPs_to_plot[0],'r',
-         model_bits_array,mAPs_to_plot[1],'b',
-         )
+# Set up legend
+plt.legend(loc='lower right')
+#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+#                   ncol=2, mode="expand", borderaxespad=0.)
 
-plt.savefig('test.png')
+# Title and axis labels
+plt.title('SqueezeDet Accuracy with Low Precision Parameters')
+plt.xlabel('Bits per model parameter')
+plt.ylabel('Mean Average Precision (mAP)')
 
+# Write the plot to file
+plt.savefig('quantization_sweep_plot.png')
 
 
 
