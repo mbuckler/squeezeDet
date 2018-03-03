@@ -9,7 +9,78 @@ This repository contains a tensorflow implementation of SqueezeDet, a convolutio
         Journal = {arXiv:1612.01051},
         Year = {2016}
     }
-    
+
+## Low Precision Implementation
+
+This fork contains [Mark Buckler](http://www.markbuckler.com/)'s
+additions to the original SqueezeDet project. Specifically, functionality has
+been added to simulate evaluation of SqueezeDet models when using fixed point
+model parameters. "Simulation" of fixed point model parameters means that
+floating point math is still used in computation, but the number of
+values which can be used to represent a parameter is artificially limited
+based on the number of simulated fixed point bits.
+
+To convert floating point parameters to simulated fixed point parameters first a
+given range is set. The default range is given by the maximum and minimum model
+parameter values before conversion. Then, valid values are defined as a linear
+distribution of 2^N possible values between this range (where N is the number of
+simulated fixed point bits). Model conversion consists of rounding each of the
+parameters to one of these valid values.
+
+### Supported Conversion Methods
+
+In addition to supporting an arbitrary number of simulated bits the code
+supports a few different conversion methods.
+
+- Rounding method:
+
+	Both nearest neighbors and stochastic rounding are supported.
+
+- Zero reservation:
+
+	The default model conversion doesn't reserve a valid value for exact
+zero, but it can if requested.
+
+- Per-layer scale:
+
+	Rather than setting the initial scale based on the max and min for the
+entire model, it can be chosen per layer.
+
+### Usage
+
+After performing the installation and downloading the KITTI dataset
+(instructions for that found below) you can evaluate a given low precision
+configuration with the following command:
+
+  ```Shell
+  python ./src/eval.py \
+    --dataset=KITTI \
+    --data_path=./data/KITTI \
+    --image_set=val \
+    --eval_dir=eval_logs_plus \
+    --run_once=True \
+    --checkpoint_path=data/model_checkpoints/squeezeDetPlus/model.ckpt-95000 \
+    --net=squeezeDet+ \
+    --gpu=0 \
+	--use_quantization=True \
+	--model_bits=10 \
+	--rounding_method=stochastic \
+	--reserve_zero_val=True \
+	--separate_layer_scales=False \
+    &> test_log_plus.txt
+  ```
+
+To perform a full sweep with different options you can run the provided script:
+
+  ```Shell
+  python ./scripts/quantize_sweep.py
+  ```
+
+### Results
+
+
+
+
 ## Installation:
 
 The following instructions are written for Linux-based distros.
