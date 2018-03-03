@@ -111,8 +111,6 @@ plt.plot(model_bits_array,mAPs_to_plot[3],'g',label=sweep_labels[3])
 
 # Set up legend
 plt.legend(loc='lower right')
-#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-#                   ncol=2, mode="expand", borderaxespad=0.)
 
 # Title and axis labels
 plt.title('SqueezeDet Accuracy with Low Precision Parameters')
