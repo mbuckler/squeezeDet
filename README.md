@@ -1,7 +1,11 @@
-## _SqueezeDet:_ Unified, Small, Low Power Fully Convolutional Neural Networks for Real-Time Object Detection for Autonomous Driving
-By Bichen Wu, Alvin Wan, Forrest Iandola, Peter H. Jin, Kurt Keutzer (UC Berkeley & DeepScale)
+## _SqueezeDet - Low Precision
+Original work by Bichen Wu, Alvin Wan, Forrest Iandola, Peter H. Jin, Kurt Keutzer (UC Berkeley & DeepScale)
+Addition of low precision evaluation by [Mark Buckler](http://www.markbuckler.com/).
 
-This repository contains a tensorflow implementation of SqueezeDet, a convolutional neural network based object detector described in our paper: https://arxiv.org/abs/1612.01051. If you find this work useful for your research, please consider citing:
+This repository contains a tensorflow implementation of SqueezeDet, a
+convolutional neural network based object detector described in this paper:
+https://arxiv.org/abs/1612.01051. If you find this work useful for your
+research, please consider citing:
 
     @inproceedings{squeezedet,
         Author = {Bichen Wu and Forrest Iandola and Peter H. Jin and Kurt Keutzer},
@@ -12,13 +16,12 @@ This repository contains a tensorflow implementation of SqueezeDet, a convolutio
 
 ## Low Precision Implementation
 
-This fork contains [Mark Buckler](http://www.markbuckler.com/)'s
-additions to the original SqueezeDet project. Specifically, functionality has
-been added to simulate evaluation of SqueezeDet models when using fixed point
-model parameters. "Simulation" of fixed point model parameters means that
-floating point math is still used in computation, but the number of
-values which can be used to represent a parameter is artificially limited
-based on the number of simulated fixed point bits.
+This fork contains additions to the original SqueezeDet project. Specifically,
+functionality has been added to simulate evaluation of SqueezeDet models when
+using fixed point model parameters. "Simulation" of fixed point model parameters
+means that floating point math is still used in computation, but the number of
+values which can be used to represent a parameter is artificially limited based
+on the number of simulated fixed point bits.
 
 To convert floating point parameters to simulated fixed point parameters first a
 given range is set. The default range is given by the maximum and minimum model
@@ -70,7 +73,8 @@ configuration with the following command:
     &> test_log_plus.txt
   ```
 
-To perform a full sweep with different options you can run the provided script:
+To perform a full sweep with different options you can run the provided script
+(shown below). This script will write out log files as well as plot results.
 
   ```Shell
   python ./scripts/quantize_sweep.py
@@ -78,8 +82,13 @@ To perform a full sweep with different options you can run the provided script:
 
 ### Results
 
+The sample output of the sweep script can be found below. Noteably, these tests
+don't include any examples with separate layer scales as this wasn't found to
+improve model accuracy at all. What does help significantly is stochastic
+rounding and zero reservation, and when used together they offer the highest
+accuracy per bit.
 
-
+![sample results](https://github.com/mbuckler/squeezeDet-low-precision/blob/master/data/quantization_sweep_plot_sample.png)
 
 ## Installation:
 
