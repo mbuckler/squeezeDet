@@ -1,5 +1,7 @@
-## _SqueezeDet - Low Precision
+## SqueezeDet - Low Precision
+
 Original work by Bichen Wu, Alvin Wan, Forrest Iandola, Peter H. Jin, Kurt Keutzer (UC Berkeley & DeepScale)
+
 Addition of low precision evaluation by [Mark Buckler](http://www.markbuckler.com/).
 
 This repository contains a tensorflow implementation of SqueezeDet, a
@@ -35,18 +37,12 @@ parameters to one of these valid values.
 In addition to supporting an arbitrary number of simulated bits the code
 supports a few different conversion methods.
 
-- Rounding method:
+- _Rounding method_: Both nearest neighbors and stochastic rounding are supported.
 
-	Both nearest neighbors and stochastic rounding are supported.
-
-- Zero reservation:
-
-	The default model conversion doesn't reserve a valid value for exact
+- _Zero reservation_:	The default model conversion doesn't reserve a valid value for exact
 zero, but it can if requested.
 
-- Per-layer scale:
-
-	Rather than setting the initial scale based on the max and min for the
+- _Per-layer scale_: Rather than setting the initial scale based on the max and min for the
 entire model, it can be chosen per layer.
 
 ### Usage
